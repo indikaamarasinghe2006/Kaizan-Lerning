@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard — Kaizen Learning{% end %}
+{% block body %}
+<h1>Leaderboard</h1>
+<p class="page-sub">Ranked by number of study sets completed, then total principles passed.</p>
+
+<table class="board-table">
+  <thead>
+    <tr><th>Rank</th><th>Name</th><th>Study sets completed</th><th>Principles passed</th></tr>
+  </thead>
+  <tbody>
+    {% for i, row in enumerate(board) %}
+      <tr class="{% if row['user_id'] == current_user_id %}board-row-me{% end %}">
+        <td>
+          {% if i == 0 %}🥇{% elif i == 1 %}🥈{% elif i == 2 %}🥉{% else %}{{ i + 1 }}{% end %}
+        </td>
+        <td>{{ row["name"] }}{% if row['user_id'] == current_user_id %} (you){% end %}</td>
+        <td>{{ row["sets_completed"] }}</td>
+        <td>{{ row["principles_completed"] }} / {{ row["total_principles"] }}</td>
+      </tr>
+    {% end %}
+    {% if not board %}
+      <tr><td colspan="4">No learners yet — be the first to complete a principle.</td></tr>
+    {% end %}
+  </tbody>
+</table>
+{% end %}

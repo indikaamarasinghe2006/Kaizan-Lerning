@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ study_set["title"] }} — Kaizen Learning{% end %}
+{% block body %}
+<a class="back-link" href="/dashboard">&larr; All study sets</a>
+<h1>{{ study_set["title"] }}</h1>
+<p class="page-sub">{{ study_set["description"] }}</p>
+
+{% if complete %}
+  <div class="flash flash-ok">
+    You've completed every principle in this study set.
+    <a href="/study/{{ study_set['slug'] }}/certificate">Get your certificate &rarr;</a>
+  </div>
+{% end %}
+
+<ol class="principle-list">
+  {% for r in rows %}
+    {% set p = r["principle"] %}
+    <li class="principle-row {% if not r['unlocked'] %}locked{% elif r['passed'] %}passed{% end %}">
+      <div class="principle-row-main">
+        <span class="principle-number">{{ p["number"] }}</span>
+        <div>
+          <div class="principle-section">{{ p["section"] }}</div>
+          <div class="principle-title">{{ p["title"] }}</div>
+        </div>
+      </div>
+      <div class="principle-row-status">
+        {% if r["passed"] %}
+          <span class="badge badge-passed">Passed &middot; {{ r["best_score"] }}/10</span>
+          <a class="btn-secondary btn-sm" href="/study/{{ study_set['slug'] }}/principle/{{ p['idx'] }}">Review</a>
+        {% elif r["unlocked"] %}
+          <span class="badge badge-unlocked">Unlocked</span>
+          <a class="btn-primary btn-sm" href="/study/{{ study_set['slug'] }}/principle/{{ p['idx'] }}">Study</a>
+        {% else %}
+          <span class="badge badge-locked">Locked</span>
+        {% end %}
+      </div>
+    </li>
+  {% end %}
+</ol>
+{% end %}

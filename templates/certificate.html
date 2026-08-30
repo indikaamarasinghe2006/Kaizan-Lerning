@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Certificate — {{ study_set["title"] }}{% end %}
+{% block body %}
+<div class="cert-toolbar no-print">
+  <a class="back-link" href="/dashboard">&larr; Dashboard</a>
+  <button onclick="window.print()" class="btn-primary">Print / Save as PDF</button>
+</div>
+
+<div class="certificate">
+  <div class="certificate-border">
+    <p class="cert-eyebrow">Kaizen Learning &middot; Certificate of Completion</p>
+    <h1 class="cert-name">{{ user["name"] }}</h1>
+    <p class="cert-body">has successfully completed all principles in</p>
+    <h2 class="cert-set-title">{{ study_set["title"] }}</h2>
+    <p class="cert-body">demonstrating mastery of every principle through a perfect score on
+       each accompanying assessment.</p>
+    <div class="cert-footer">
+      <div class="cert-date">
+        <div class="cert-line"></div>
+        <p>Issued {{ cert["issued_at"][:10] }}</p>
+      </div>
+      <div class="cert-seal">改</div>
+      <div class="cert-sign">
+        <div class="cert-line"></div>
+        <p>Kaizen Learning Platform</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% end %}

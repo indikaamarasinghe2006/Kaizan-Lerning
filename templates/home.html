@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Kaizen Learning — Master the Toyota Way{% end %}
+{% block body %}
+<section class="hero">
+  <h1>Learn the principles that built the world's most disciplined production system.</h1>
+  <p class="hero-sub">
+    Read each principle in depth, prove your understanding with a focused 10-question quiz,
+    and unlock the next one only once you've mastered the last. Finish the full study set to
+    earn a printable certificate.
+  </p>
+  <div class="hero-actions">
+    <a href="/register" class="btn-primary">Start learning — it's free</a>
+    <a href="/login" class="btn-secondary">I already have an account</a>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <div class="feature-card">
+    <h3>Study Set 1: The Toyota Way</h3>
+    <p>All 14 management principles from Jeffrey Liker's "The Toyota Way," grouped into
+       Long-Term Philosophy, Process, People &amp; Partners, and Problem Solving.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Prove it, then progress</h3>
+    <p>Each principle ends with a 10-question quiz. Score 100% to unlock the next principle —
+       no skipping ahead.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Ranked leaderboard</h3>
+    <p>See how you stack up against everyone else learning on the platform, ranked by
+       completed study sets.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Certificate on completion</h3>
+    <p>Finish every principle in a study set and print a certificate with your name on it.</p>
+  </div>
+</section>
+{% end %}

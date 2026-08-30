@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ target["name"] }} — Admin detail{% end %}
+{% block body %}
+<a class="back-link" href="/admin">&larr; Admin dashboard</a>
+<h1>{{ target["name"] }}</h1>
+<p class="page-sub">{{ target["email"] }} &middot; {{ study_set["title"] }}</p>
+
+<table class="board-table">
+  <thead><tr><th>#</th><th>Principle</th><th>Status</th><th>Best score</th><th>Attempts</th></tr></thead>
+  <tbody>
+    {% for d in detail %}
+      <tr>
+        <td>{{ d["number"] }}</td>
+        <td>{{ d["title"] }}</td>
+        <td>{% if d["passed"] %}<span class="badge badge-passed">Passed</span>{% else %}<span class="badge badge-locked">Not passed</span>{% end %}</td>
+        <td>{{ d["best_score"] }}/10</td>
+        <td>{{ d["attempts"] }}</td>
+      </tr>
+    {% end %}
+  </tbody>
+</table>
+{% end %}

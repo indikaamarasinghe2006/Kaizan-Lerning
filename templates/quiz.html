@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Quiz — Principle {{ principle["number"] }}{% end %}
+{% block body %}
+<a class="back-link" href="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] }}">&larr; Back to principle</a>
+<h1>Quiz: Principle {{ principle["number"] }}</h1>
+<p class="page-sub">{{ principle["title"] }}</p>
+
+{% if result is None %}
+  <p class="quiz-instructions">Answer all 10 questions. You need <strong>10 out of 10</strong> correct to unlock the next principle. You can retake the quiz as many times as you need.</p>
+  <form method="post" action="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] }}/quiz" class="quiz-form">
+    {% for i, question in enumerate(questions) %}
+      <fieldset class="quiz-question">
+        <legend>{{ i + 1 }}. {{ question["question"] }}</legend>
+        {% set opts = [("A", question["option_a"]), ("B", question["option_b"]), ("C", question["option_c"]), ("D", question["option_d"])] %}
+        {% for oi, (letter, text) in enumerate(opts) %}
+          <label class="quiz-option">
+            <input type="radio" name="q_{{ question['id'] }}" value="{{ oi }}" required>
+            <span><strong>{{ letter }}.</strong> {{ text }}</span>
+          </label>
+        {% end %}
+      </fieldset>
+    {% end %}
+    <button type="submit" class="btn-primary full-width">Submit answers</button>
+  </form>
+{% else %}
+  <div class="quiz-result {% if result['passed'] %}quiz-result-pass{% else %}quiz-result-fail{% end %}">
+    <h2>You scored {{ result["score"] }} / {{ result["total"] }}</h2>
+    {% if result["passed"] %}
+      <p>Excellent work — you've unlocked the next principle.</p>
+      {% if result["is_last"] %}
+        <a class="btn-primary" href="/study/{{ study_set['slug'] }}/certificate">Get your certificate &rarr;</a>
+      {% else %}
+        <a class="btn-primary" href="/study/{{ study_set['slug'] }}/principle/{{ result['next_idx'] }}">Continue to Principle {{ result['next_idx'] }} &rarr;</a>
+      {% end %}
+    {% else %}
+      <p>You need a perfect score to move on. Review the explanations below, revisit the principle, and try again.</p>
+      <a class="btn-primary" href="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] }}/quiz">Retake quiz</a>
+      <a class="btn-secondary" href="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] }}">Review principle</a>
+    {% end %}
+  </div>
+
+  <div class="quiz-review">
+    {% for i, d in enumerate(result["details"]) %}
+      {% set question = d["question"] %}
+      {% set opts = [question["option_a"], question["option_b"], question["option_c"], question["option_d"]] %}
+      <div class="review-item {% if d['is_correct'] %}review-correct{% else %}review-incorrect{% end %}">
+        <p class="review-q">{{ i + 1 }}. {{ question["question"] }}</p>
+        <p class="review-answer">
+          Your answer:
+          {% if d["selected"] is not None %}{{ opts[d["selected"]] }}{% else %}(no answer){% end %}
+          {% if d["is_correct"] %}&mdash; Correct{% else %}&mdash; Incorrect{% end %}
+        </p>
+        {% if not d["is_correct"] %}
+          <p class="review-correct-answer">Correct answer: {{ opts[question["correct"]] }}</p>
+        {% end %}
+        <p class="review-explanation">{{ question["explanation"] }}</p>
+      </div>
+    {% end %}
+  </div>
+{% end %}
+{% end %}

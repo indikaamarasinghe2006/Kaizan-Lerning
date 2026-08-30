@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Toyota Way Learning Platform{% end %}</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="site-header no-print">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">改</span>
+      <span class="brand-text">Kaizen Learning</span>
+    </a>
+    <nav class="main-nav">
+      {% if current_user %}
+        <a href="/dashboard">Dashboard</a>
+        <a href="/leaderboard">Leaderboard</a>
+        {% if current_user["role"] == "admin" %}
+          <a href="/admin">Admin</a>
+        {% end %}
+        <span class="nav-user">Hi, {{ current_user["name"] }}</span>
+        <a href="/logout" class="btn-ghost">Log out</a>
+      {% else %}
+        <a href="/login">Log in</a>
+        <a href="/register" class="btn-primary-nav">Sign up</a>
+      {% end %}
+    </nav>
+  </div>
+</header>
+
+<main class="wrap main-content">
+  {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+  {% end %}
+  {% if message %}
+    <div class="flash flash-ok">{{ message }}</div>
+  {% end %}
+  {% block body %}{% end %}
+</main>
+
+<footer class="site-footer no-print">
+  <div class="wrap">
+    <p>Kaizen Learning &mdash; continuous-improvement training platform. Study Set 1 of many: <strong>The Toyota Way</strong>.</p>
+  </div>
+</footer>
+</body>
+</html>

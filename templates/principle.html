@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Principle {{ principle["number"] }} — Kaizen Learning{% end %}
+{% block body %}
+<a class="back-link" href="/study/{{ study_set['slug'] }}">&larr; {{ study_set["title"] }}</a>
+
+<div class="principle-header">
+  <div class="principle-section">{{ principle["section"] }}</div>
+  <h1>Principle {{ principle["number"] }}: {{ principle["title"] }}</h1>
+  {% if passed %}
+    <span class="badge badge-passed">Passed &middot; {{ best_score }}/10</span>
+  {% end %}
+</div>
+
+<article class="principle-content">
+  {% for para in content_paragraphs %}
+    <p>{{ para }}</p>
+  {% end %}
+</article>
+
+<div class="principle-actions">
+  <a class="btn-primary" href="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] }}/quiz">
+    {% if passed %}Retake quiz{% else %}Take the 10-question quiz{% end %}
+  </a>
+  {% if passed and not is_last %}
+    <a class="btn-secondary" href="/study/{{ study_set['slug'] }}/principle/{{ principle['idx'] + 1 }}">Next principle &rarr;</a>
+  {% end %}
+  {% if passed and is_last %}
+    <a class="btn-secondary" href="/study/{{ study_set['slug'] }}/certificate">Get certificate &rarr;</a>
+  {% end %}
+</div>
+{% end %}

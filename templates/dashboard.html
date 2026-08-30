@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Kaizen Learning{% end %}
+{% block body %}
+<h1>Your study sets</h1>
+<p class="page-sub">Pick up where you left off. More study sets will appear here over time.</p>
+
+<div class="set-grid">
+  {% for s in summaries %}
+    {% set ss = s["study_set"] %}
+    <div class="set-card {% if s['complete'] %}set-card-complete{% end %}">
+      <h2>{{ ss["title"] }}</h2>
+      <p>{{ ss["description"] }}</p>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" style="width: {{ int(100 * s['passed'] / s['total']) if s['total'] else 0 }}%"></div>
+      </div>
+      <p class="progress-label">{{ s["passed"] }} / {{ s["total"] }} principles passed</p>
+      <div class="set-card-actions">
+        <a class="btn-primary" href="/study/{{ ss['slug'] }}">
+          {% if s['passed'] == 0 %}Start{% else %}Continue{% end %}
+        </a>
+        {% if s["complete"] %}
+          <a class="btn-secondary" href="/study/{{ ss['slug'] }}/certificate">View certificate</a>
+        {% end %}
+      </div>
+    </div>
+  {% end %}
+</div>
+{% end %}

@@ -1,0 +1,19 @@
+# Render.com "Blueprint" — lets you deploy with one click via
+# https://dashboard.render.com/blueprints (New + > Blueprint > point at your repo).
+# You can also just create a Web Service manually and ignore this file; see README.md.
+services:
+  - type: web
+    name: kaizen-learning
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 app.py
+    envVars:
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: kaizen-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
