@@ -220,7 +220,7 @@ def admin_user_overview():
     """Detailed per-user stats for the admin monitoring dashboard."""
     conn = dbmod.get_conn()
     users = conn.execute(
-        "SELECT id, name, email, created_at FROM users WHERE role != 'admin' ORDER BY name"
+        "SELECT id, name, email, created_at, last_login FROM users WHERE role != 'admin' ORDER BY name"
     ).fetchall()
     overview = []
     for u in users:
@@ -240,6 +240,7 @@ def admin_user_overview():
             "name": u["name"],
             "email": u["email"],
             "joined": u["created_at"],
+            "last_login": u["last_login"] or "Never",
             "principles_passed": passed,
             "total_attempts": attempts_row["a"],
             "avg_best_score": round(attempts_row["avgscore"], 1),

@@ -18,6 +18,7 @@ Default admin login:
 """
 import os
 import json
+import logging
 import secrets
 
 import tornado.ioloop
@@ -124,8 +125,14 @@ class LoginHandler(BaseHandler):
         password = self.get_body_argument("password", "")
         user = q.get_user_by_email(email)
         if not user or not dbmod.verify_password(password, user["password_hash"]):
+            logging.warning(f"Login failed for {email} from {self.request.remote_ip}")
             self.render("login.html", error="Invalid email or password.")
             return
+        dbmod.record_login(user["id"])
+        logging.info(
+            f"Login success: {user['email']} (id={user['id']}, role={user['role']}) "
+            f"from {self.request.remote_ip}"
+        )
         self.set_secure_cookie("user_id", str(user["id"]))
         if user["role"] == "admin":
             self.redirect("/admin")
@@ -385,7 +392,10 @@ if __name__ == "__main__":
     # Render / Railway / Heroku-style hosts inject the port to bind via the PORT
     # env var. Fall back to --port (default 8888) for local development.
     port = int(os.environ.get("PORT", options.port))
-    app.listen(port, address="0.0.0.0")
+    # xheaders=True makes Tornado trust the X-Forwarded-For / X-Forwarded-Proto
+    # headers set by Render's proxy, so self.request.remote_ip is the real
+    # visitor IP instead of the proxy's internal address.
+    app.listen(port, address="0.0.0.0", xheaders=True)
     print(f"Toyota Way Learning Platform running on http://0.0.0.0:{port}")
     print(f"Admin login -> email: {os.environ.get('ADMIN_EMAIL', 'admin@lms.local')} "
           f"| password: {'(set via ADMIN_PASSWORD env var)' if 'ADMIN_PASSWORD' in os.environ else 'ChangeMe123!'}")

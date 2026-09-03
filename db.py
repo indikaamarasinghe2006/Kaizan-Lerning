@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user',
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    last_login TEXT
 );
 
 CREATE TABLE IF NOT EXISTS study_sets (
@@ -88,6 +89,11 @@ def get_conn():
 def init_db():
     conn = get_conn()
     conn.executescript(SCHEMA)
+    # Migration: older databases created before last_login existed won't have
+    # the column yet — add it if missing so existing user data isn't lost.
+    cols = [row["name"] for row in conn.execute("PRAGMA table_info(users)")]
+    if "last_login" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
     conn.commit()
     conn.close()
 
@@ -161,6 +167,14 @@ def seed_study_set(study_set_dict, principles_list):
     conn.commit()
     conn.close()
     return study_set_id, True
+
+
+def record_login(user_id):
+    """Stamp the current time as this user's most recent successful login."""
+    conn = get_conn()
+    conn.execute("UPDATE users SET last_login = ? WHERE id = ?", (now_iso(), user_id))
+    conn.commit()
+    conn.close()
 
 
 def ensure_admin(name="Site Admin", email="admin@lms.local", password="ChangeMe123!"):

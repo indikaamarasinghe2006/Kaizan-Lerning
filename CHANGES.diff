@@ -1,0 +1,131 @@
+diff --git a/app.py b/app.py
+index dfaaf5e..f29609f 100644
+--- a/app.py
++++ b/app.py
+@@ -18,6 +18,7 @@ Default admin login:
+ """
+ import os
+ import json
++import logging
+ import secrets
+ 
+ import tornado.ioloop
+@@ -124,8 +125,14 @@ class LoginHandler(BaseHandler):
+         password = self.get_body_argument("password", "")
+         user = q.get_user_by_email(email)
+         if not user or not dbmod.verify_password(password, user["password_hash"]):
++            logging.warning(f"Login failed for {email} from {self.request.remote_ip}")
+             self.render("login.html", error="Invalid email or password.")
+             return
++        dbmod.record_login(user["id"])
++        logging.info(
++            f"Login success: {user['email']} (id={user['id']}, role={user['role']}) "
++            f"from {self.request.remote_ip}"
++        )
+         self.set_secure_cookie("user_id", str(user["id"]))
+         if user["role"] == "admin":
+             self.redirect("/admin")
+@@ -385,7 +392,10 @@ if __name__ == "__main__":
+     # Render / Railway / Heroku-style hosts inject the port to bind via the PORT
+     # env var. Fall back to --port (default 8888) for local development.
+     port = int(os.environ.get("PORT", options.port))
+-    app.listen(port, address="0.0.0.0")
++    # xheaders=True makes Tornado trust the X-Forwarded-For / X-Forwarded-Proto
++    # headers set by Render's proxy, so self.request.remote_ip is the real
++    # visitor IP instead of the proxy's internal address.
++    app.listen(port, address="0.0.0.0", xheaders=True)
+     print(f"Toyota Way Learning Platform running on http://0.0.0.0:{port}")
+     print(f"Admin login -> email: {os.environ.get('ADMIN_EMAIL', 'admin@lms.local')} "
+           f"| password: {'(set via ADMIN_PASSWORD env var)' if 'ADMIN_PASSWORD' in os.environ else 'ChangeMe123!'}")
+diff --git a/db.py b/db.py
+index c179f6d..bf6fb07 100644
+--- a/db.py
++++ b/db.py
+@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
+     email TEXT NOT NULL UNIQUE,
+     password_hash TEXT NOT NULL,
+     role TEXT NOT NULL DEFAULT 'user',
+-    created_at TEXT NOT NULL
++    created_at TEXT NOT NULL,
++    last_login TEXT
+ );
+ 
+ CREATE TABLE IF NOT EXISTS study_sets (
+@@ -88,6 +89,11 @@ def get_conn():
+ def init_db():
+     conn = get_conn()
+     conn.executescript(SCHEMA)
++    # Migration: older databases created before last_login existed won't have
++    # the column yet — add it if missing so existing user data isn't lost.
++    cols = [row["name"] for row in conn.execute("PRAGMA table_info(users)")]
++    if "last_login" not in cols:
++        conn.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
+     conn.commit()
+     conn.close()
+ 
+@@ -163,6 +169,14 @@ def seed_study_set(study_set_dict, principles_list):
+     return study_set_id, True
+ 
+ 
++def record_login(user_id):
++    """Stamp the current time as this user's most recent successful login."""
++    conn = get_conn()
++    conn.execute("UPDATE users SET last_login = ? WHERE id = ?", (now_iso(), user_id))
++    conn.commit()
++    conn.close()
++
++
+ def ensure_admin(name="Site Admin", email="admin@lms.local", password="ChangeMe123!"):
+     conn = get_conn()
+     cur = conn.cursor()
+diff --git a/queries.py b/queries.py
+index d7c0676..7236d40 100644
+--- a/queries.py
++++ b/queries.py
+@@ -220,7 +220,7 @@ def admin_user_overview():
+     """Detailed per-user stats for the admin monitoring dashboard."""
+     conn = dbmod.get_conn()
+     users = conn.execute(
+-        "SELECT id, name, email, created_at FROM users WHERE role != 'admin' ORDER BY name"
++        "SELECT id, name, email, created_at, last_login FROM users WHERE role != 'admin' ORDER BY name"
+     ).fetchall()
+     overview = []
+     for u in users:
+@@ -240,6 +240,7 @@ def admin_user_overview():
+             "name": u["name"],
+             "email": u["email"],
+             "joined": u["created_at"],
++            "last_login": u["last_login"] or "Never",
+             "principles_passed": passed,
+             "total_attempts": attempts_row["a"],
+             "avg_best_score": round(attempts_row["avgscore"], 1),
+diff --git a/templates/admin.html b/templates/admin.html
+index 4c610a8..f9c9a30 100644
+--- a/templates/admin.html
++++ b/templates/admin.html
+@@ -10,7 +10,7 @@
+     <tr>
+       <th>Name</th><th>Email</th><th>Joined</th>
+       <th>Principles passed</th><th>Total attempts</th><th>Avg best score</th>
+-      <th>Last activity</th><th>Detail</th>
++      <th>Last activity</th><th>Last login</th><th>Detail</th>
+     </tr>
+   </thead>
+   <tbody>
+@@ -23,6 +23,7 @@
+         <td>{{ u["total_attempts"] }}</td>
+         <td>{{ u["avg_best_score"] }}</td>
+         <td>{{ u["last_activity"] }}</td>
++        <td>{{ u["last_login"][:16].replace("T", " ") if u["last_login"] != "Never" else "Never" }}</td>
+         <td>
+           {% for ss in study_sets %}
+             <a class="btn-secondary btn-sm" href="/admin/user/{{ u['id'] }}/{{ ss['slug'] }}">{{ ss["title"][:18] }}&hellip;</a>
+@@ -31,7 +32,7 @@
+       </tr>
+     {% end %}
+     {% if not overview %}
+-      <tr><td colspan="8">No learners have registered yet.</td></tr>
++      <tr><td colspan="9">No learners have registered yet.</td></tr>
+     {% end %}
+   </tbody>
+ </table>
